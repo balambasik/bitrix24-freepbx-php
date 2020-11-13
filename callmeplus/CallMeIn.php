@@ -57,7 +57,8 @@ $pamiClient->registerEventListener(
         //берем Exten из ивента
         $extention = $event->getExtension();
 
-        $globalsObj->currentExten = $extention;
+        $globalsObj->currentExten  = $extention;
+        $globalsObj->currentExtNum = $extNum;
 
         //логируем параметры звонка
         $helper->writeToLog(array('extNum'       => $extNum,
@@ -228,6 +229,20 @@ $pamiClient->registerEventListener(
         $resultFromB24 = $helper->uploadRecordedFile($call_id, $FullFname, $CallIntNum, $CallDuration, $CallDisposition);
         //логируем, что нам рассказал битрикс в ответ на наш реквест
         $helper->writeToLog($resultFromB24, 'New HangupEvent Second Step - upload filename');
+
+
+        // create lead
+        if (isset($resultFromB24["error"])) {
+            $leadParams = $helper->parseExtenData($globalsObj->currentExten);
+            $helper->createLead(array_merge($leadParams, [
+                "PHONE" => [["VALUE" => $globalsObj->currentExtNum]]
+            ]));
+//
+//            $helper->writeToLog(array(
+//                'currentExten'  => $globalsObj->currentExten,
+//                'currentExtNum' => $globalsObj->currentExtNum,
+//                'callUniqueid'  => $event->getUniqueid()), 'нет ответа');
+        }
 
         // удаляем из массивов тот вызов, который завершился
         $helper->removeItemFromArray($globalsObj->uniqueids, $callUniqueid, 'value');

@@ -153,13 +153,29 @@ class HelperFuncs
     }
 
     /**
+     * @param $data
+     */
+    public function createLead($data)
+    {
+        $result = $this->getBitrixApi([
+            "fields" => $data,
+            "params" => [
+                "REGISTER_SONET_EVENT" => "Y"
+            ]
+        ], 'crm.lead.add');
+
+        $this->writeToLog($result, 'BITRIX create lead');
+    }
+
+
+    /**
      * @param $exten
      * @return array|mixed
      */
     public function parseExtenData($exten)
     {
         $data = json_decode(file_get_contents(dirname(dirname(__FILE__)) . "/extenConfig.json"), true);
-        return isset($data[$exten]) ? $data[$exten] : null;
+        return isset($data[$exten]) ? $data[$exten] : [];
     }
 
     /**

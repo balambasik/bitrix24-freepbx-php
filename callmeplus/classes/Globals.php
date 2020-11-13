@@ -26,6 +26,7 @@ class Globals
     public $extensions = [];
     // текущий exten
     public $currentExten = null;
+    public $currentExtNum = null;
 
 
     static public function getInstance()
