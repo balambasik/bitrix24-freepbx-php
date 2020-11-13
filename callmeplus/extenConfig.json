@@ -4,6 +4,7 @@
     "UTM_CAMPAIGN": "тест"
   },
   "TEST_NOT_REMOVED": {
+    "LEAD_DOC": "https://dev.1c-bitrix.ru/rest_help/crm/leads/crm_lead_fields.php",
     "ADDRESS": "",
     "ADDRESS_2": "",
     "ADDRESS_CITY": "",
