@@ -8,7 +8,6 @@
 
 class HelperFuncs
 {
-
     /**
      * Get Internal number by using USER_ID.
      *
@@ -19,7 +18,6 @@ class HelperFuncs
     public function getIntNumByUSER_ID($userid)
     {
         $result = $this->getBitrixApi(array("ID" => $userid), 'user.get');
-
         if ($result) {
             return $result['result'][0]['UF_PHONE_INNER'];
         } else {
@@ -70,20 +68,19 @@ class HelperFuncs
                 break;
             default:
                 if (empty($disposition)) $sipcode = 304; //если пустой пришел, то поставим неотвечено
-                else $sipcode = 603; // отклонено, когда все остальное
+//				else $sipcode = 603; // отклонено, когда все остальное
+                else $sipcode = 304; // отклонено, когда все остальное
                 break;
         }
-        $ar     = array(
+
+        $result = $this->getBitrixApi(array(
             'USER_PHONE_INNER' => $intNum,
             'CALL_ID'          => $call_id, //идентификатор звонка из результатов вызова метода telephony.externalCall.register
             'STATUS_CODE'      => $sipcode,
             //'CALL_START_DATE' => date("Y-m-d H:i:s"),
             'DURATION'         => $duration, //длительность звонка в секундах
             'RECORD_URL'       => $recordedfile //url на запись звонка для сохранения в Битрикс24
-        );
-        $result = $this->getBitrixApi($ar, 'telephony.externalcall.finish');
-        $this->writeToLog($ar, 'BITRIX upload');
-        $this->writeToLog($result, 'BITRIX upload result');
+        ), 'telephony.externalcall.finish');
         if ($result) {
             return $result;
         } else {
@@ -111,18 +108,19 @@ class HelperFuncs
      *    )
      * We need only CALL_ID
      */
-    public function runInputCall($exten, $callerid, $type = 2)
+    public function runInputCall($exten, $callerid)
     {
         $result = $this->getBitrixApi(array(
             'USER_PHONE_INNER' => $exten,
             //'USER_ID' => $argv[1],
             'PHONE_NUMBER'     => $callerid,
-            'TYPE'             => $type,
+            'TYPE'             => 2,
             'CALL_START_DATE'  => date("Y-m-d H:i:s"),
             'CRM_CREATE'       => 1,
             'SHOW'             => 0,
+            'CRM_ENTITY_ID'    => $lead_id,
         ), 'telephony.externalcall.register');
-        $this->writeToLog($result, 'BITRIX runInputCall result');
+        $this->writeToLog($result, 'runInputCall result');
         if ($result) {
             return $result['result'];
         } else {
@@ -138,13 +136,17 @@ class HelperFuncs
      */
     public function updateLead($response = null, $exten = null)
     {
+
+        $this->writeToLog($exten, 'EXTEN');
+
+
         if (empty($response["CRM_CREATED_LEAD"]) || !$exten) {
             $this->writeToLog("", 'emptyExten');
             return;
         }
 
         if ($extenData = $this->parseExtenData($exten)) {
-            $this->writeToLog($extenData , 'parseExtenData');
+            $this->writeToLog($extenData, 'parseExtenData');
             $result = $this->getBitrixApi([
                 "id"     => $response["CRM_CREATED_LEAD"],
                 "fields" => $extenData
@@ -160,7 +162,7 @@ class HelperFuncs
      */
     public function parseExtenData($exten)
     {
-        $data = include_once dirname(__DIR__) . "/extenConfig.php";
+        $data = json_decode(file_get_contents(dirname(dirname(__FILE__)) . "/extenConfig.json"), true);
         return isset($data[$exten]) ? $data[$exten] : null;
     }
 
@@ -300,6 +302,7 @@ class HelperFuncs
             return false;
     }
 
+
     /**
      * Hide input call data for all except user with internal number.
      *
@@ -413,11 +416,7 @@ class HelperFuncs
             $log .= (strlen($title) > 0 ? $title : 'DEBUG') . "\n";
             $log .= print_r($data, 1);
             $log .= "\n------------------------\n";
-            if (!file_exists(getcwd() . '/logs')) {
-                mkdir(getcwd() . '/logs', 0777, true);
-            }
             file_put_contents(getcwd() . '/logs/CallMe.log', $log, FILE_APPEND);
-            //print $log;
             return true;
         } else return;
     }

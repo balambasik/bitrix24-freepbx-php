@@ -43,8 +43,6 @@ $globalsObj->extentions = $helper->getConfig('extentions');
 $pamiClient = $callami->NewPAMIClient();
 $pamiClient->open();
 
-//                $helper->writeToLog([],'START THIS');
-
 //обрабатываем NewchannelEvent события
 $pamiClient->registerEventListener(
     function (EventMessage $event) use ($helper, $callami, $globalsObj) {
@@ -58,6 +56,8 @@ $pamiClient->registerEventListener(
 
         //берем Exten из ивента
         $extention = $event->getExtension();
+
+        $globalsObj->currentExten = $extention;
 
         //логируем параметры звонка
         $helper->writeToLog(array('extNum'       => $extNum,
@@ -83,11 +83,11 @@ $pamiClient->registerEventListener(
 
     }, function (EventMessage $event) use ($globalsObj) {
     //для фильтра берем только указанные внешние номера
-    //if ($event instanceof NewchannelEvent)                    print_r ($event);
     return
         $event instanceof NewchannelEvent
         //проверяем на вхождение в массив
         && in_array($event->getExtension(), $globalsObj->extentions);
+//                        && in_array($event->getExtension(), $globalsObj->trunks);
 }
 );
 
@@ -96,15 +96,14 @@ $pamiClient->registerEventListener(
     function (EventMessage $event) use ($helper, $globalsObj) {
         $callUniqueid = $event->getUniqueID();
 
-        if (preg_match('/^http.+$/', $event->getValue())) $globalsObj->FullFnameUrls[$callUniqueid] = $event->getValue();
+        if (preg_match('/mp3/', $event->getValue())) $globalsObj->FullFnameUrls[$callUniqueid] = $event->getValue();
         if (preg_match('/^\d+$/', $event->getValue())) $globalsObj->Durations[$callUniqueid] = $event->getValue();
         if (preg_match('/^[A-Z\ ]+$/', $event->getValue())) $globalsObj->Dispositions[$callUniqueid] = $event->getValue();
 
         //логируем параметры звонка
         $helper->writeToLog(array('FullFnameUrls' => $globalsObj->FullFnameUrls,
                                   'Durations'     => $globalsObj->Durations,
-                                  'Dispositions'  => $globalsObj->Dispositions,
-        ),
+                                  'Dispositions'  => $globalsObj->Dispositions),
             'New VarSetEvent - get FullFname,CallMeDURATION,CallMeDISPOSITION');
     }, function (EventMessage $event) use ($globalsObj) {
     return
@@ -127,11 +126,13 @@ $pamiClient->registerEventListener(
         $extNum       = $event->getCallerIDNum();
         $CallChannel  = $event->getChannel();
 
+
         //регистриуем звонок в битриксе
         $response = $helper->runInputCall($intNum, $extNum);
 
+
         // обновляем данные лида (если лид создан)
-        $helper->updateLead($response, $event->getExtension());
+        $helper->updateLead($response, $globalsObj->currentExten);
 
         $globalsObj->calls[$callUniqueid] = $response['CALL_ID'];
 
