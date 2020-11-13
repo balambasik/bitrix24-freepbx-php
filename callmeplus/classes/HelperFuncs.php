@@ -126,7 +126,6 @@ class HelperFuncs
         } else {
             return false;
         }
-
     }
 
     /**
@@ -136,19 +135,16 @@ class HelperFuncs
      */
     public function updateLead($response = null, $exten = null)
     {
-
-        $this->writeToLog($exten, 'EXTEN');
-
-
         if (empty($response["CRM_CREATED_LEAD"]) || !$exten) {
-            $this->writeToLog("", 'emptyExten');
             return;
         }
 
-        if ($extenData = $this->parseExtenData($exten)) {
-            $this->writeToLog($extenData, 'parseExtenData');
+        $leadId    = $response["CRM_CREATED_LEAD"];
+        $extenData = $this->parseExtenData($exten);
+
+        if ($extenData) {
             $result = $this->getBitrixApi([
-                "id"     => $response["CRM_CREATED_LEAD"],
+                "id"     => $leadId,
                 "fields" => $extenData
             ], 'crm.lead.update');
 

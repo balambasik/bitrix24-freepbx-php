@@ -1,7 +1,10 @@
 {
   "7995": {
     "UTM_SOURCE": "380931705454",
-    "UTM_CAMPAIGN": "тест"
+    "UTM_CAMPAIGN": "тест",
+    "TITLE": "Кристалл",
+    "SOURCE_ID": "2",
+    "UF_PHONE_SITY": "0800601111"
   },
   "TEST_NOT_REMOVED": {
     "LEAD_DOC": "https://dev.1c-bitrix.ru/rest_help/crm/leads/crm_lead_fields.php",
